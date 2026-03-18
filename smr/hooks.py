@@ -43,7 +43,10 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Lead" : "public/js/lead.js"
+}
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -136,7 +139,13 @@ app_license = "mit"
 # Document Events
 # ---------------
 # Hook on document methods and events
-
+doc_events = {
+    "Quotation": {
+        "before_save": "smr.smr.custom_script.quotation.before_save",
+        "before_cancel": "smr.smr.custom_script.quotation.before_cancel",
+        "on_trash": "smr.smr.custom_script.quotation.on_trash",
+    }
+}
 # doc_events = {
 # 	"*": {
 # 		"on_update": "method",
