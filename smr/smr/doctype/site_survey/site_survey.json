@@ -12,6 +12,7 @@
   "client_mobile_number",
   "amended_from",
   "site_location_map",
+  "site_visitor",
   "site_visitor_name",
   "department",
   "column_break_nnvi",
@@ -96,13 +97,7 @@
    "label": "Capacity"
   },
   {
-   "fieldname": "site_visitor_name",
-   "fieldtype": "Link",
-   "label": "Site Visitor Name",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "site_visitor_name.department",
+   "fetch_from": "site_visitor.department",
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
@@ -155,6 +150,19 @@
    "hidden": 1,
    "label": "Designing",
    "options": "Designing"
+  },
+  {
+   "fieldname": "site_visitor",
+   "fieldtype": "Link",
+   "label": "Site Visitor",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "site_visitor.employee_name",
+   "fieldname": "site_visitor_name",
+   "fieldtype": "Data",
+   "label": "Site Visitor Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -170,7 +178,7 @@
    "link_fieldname": "site_survey"
   }
  ],
- "modified": "2026-03-18 09:33:53.507985",
+ "modified": "2026-03-30 19:12:28.852949",
  "modified_by": "Administrator",
  "module": "SMR",
  "name": "Site Survey",

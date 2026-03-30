@@ -36,7 +36,7 @@ frappe.ui.form.on("Site Survey", {
                 frappe.db.get_doc("Lead", frm.doc.lead_from).then(doc => {
         
                     frm.set_value("client_mobile_number", doc.mobile_no);
-                    frm.set_value("clint_name", doc.company_name || doc.job_title);
+                    frm.set_value("clint_name", doc.company_name || doc.lead_name);
         
                 });
         

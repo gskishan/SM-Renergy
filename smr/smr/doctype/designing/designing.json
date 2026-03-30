@@ -15,7 +15,8 @@
   "column_break_aglz",
   "design_date",
   "capacity",
-  "disigner_name",
+  "designer",
+  "designer_name",
   "department",
   "designing_status",
   "quotation",
@@ -24,6 +25,10 @@
   "design_attachment",
   "bom_item_tab",
   "bom_item",
+  "section_break_jxbr",
+  "total_qty",
+  "column_break_vzyf",
+  "amount",
   "remark_tab",
   "remark"
  ],
@@ -75,13 +80,7 @@
    "label": "Capacity"
   },
   {
-   "fieldname": "disigner_name",
-   "fieldtype": "Link",
-   "label": "Disigner Name",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "disigner_name.department",
+   "fetch_from": "designer.department",
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
@@ -146,6 +145,39 @@
    "hidden": 1,
    "label": "Site Survey",
    "options": "Site Survey"
+  },
+  {
+   "fieldname": "designer",
+   "fieldtype": "Link",
+   "label": "Designer",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "designer.employee_name",
+   "fieldname": "designer_name",
+   "fieldtype": "Data",
+   "label": "Designer Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_jxbr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_qty",
+   "fieldtype": "Float",
+   "label": "Total Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_vzyf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -161,7 +193,7 @@
    "link_fieldname": "designing"
   }
  ],
- "modified": "2026-03-18 09:34:59.810272",
+ "modified": "2026-03-30 19:40:04.428823",
  "modified_by": "Administrator",
  "module": "SMR",
  "name": "Designing",

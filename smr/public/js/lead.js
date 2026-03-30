@@ -14,7 +14,7 @@ frappe.ui.form.on("Lead", {
 
                     frappe.new_doc("Site Survey", {
                         lead_from: frm.doc.name,
-                        client_name: frm.doc.company_name || frm.doc.job_title,
+                        client_name: frm.doc.company_name || frm.doc.lead_name,
                         client_mobile_number: frm.doc.mobile_no,
                         site_address: r.message ? r.message.name : null
                     });
