@@ -144,6 +144,10 @@ doc_events = {
         "before_save": "smr.smr.custom_script.quotation.before_save",
         "before_cancel": "smr.smr.custom_script.quotation.before_cancel",
         "on_trash": "smr.smr.custom_script.quotation.on_trash",
+    },
+    "Sales Invoice":{
+        "on_update_after_submit": "smr.smr.custom_script.api.on_update_after_submit",
+
     }
 }
 # doc_events = {

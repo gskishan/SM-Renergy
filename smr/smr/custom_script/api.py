@@ -1,4 +1,5 @@
 import frappe
+from frappe import db
 
 @frappe.whitelist()
 def get_remaining_qty(designing_name):
@@ -19,3 +20,23 @@ def get_remaining_qty(designing_name):
         remaining_qty_map[row.item_code] = max(row.qty - used_qty, 0)
     
     return remaining_qty_map
+
+def on_update_after_submit(doc, method):
+
+    # GL Entry update
+    db.sql("""
+        UPDATE `tabGL Entry`
+        SET 
+            trading = %s,
+            epc = %s,
+            avenue = %s
+        WHERE voucher_type = 'Sales Invoice'
+        AND voucher_no = %s
+    """, (
+        doc.trading,
+        doc.epc,
+        doc.avenue,
+        doc.name
+    ))
+
+    db.commit()
