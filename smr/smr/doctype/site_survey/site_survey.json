@@ -15,6 +15,8 @@
   "site_visitor",
   "site_visitor_name",
   "department",
+  "nearest_landmark",
+  "contact_person_name_and_number",
   "column_break_nnvi",
   "site_survey_date",
   "site_address",
@@ -24,6 +26,47 @@
   "project",
   "quotation",
   "designing",
+  "nodal_person_building_contact_no",
+  "technical_information_tab",
+  "latitude",
+  "longitude",
+  "connection",
+  "meter_connection_type",
+  "ca_number",
+  "electricity_bill",
+  "meter_number",
+  "meter_type",
+  "column_break_nblq",
+  "sanction_load_kwkva",
+  "connected_load_kw",
+  "grid_power_availability",
+  "grid_availability_hours",
+  "3_phase_available_in_ltdb",
+  "missing_phase_rybn",
+  "ltdb_present",
+  "roof_condition",
+  "section_break_wbex",
+  "total_roof_area_sqmt",
+  "shadow_free_area_sqmt",
+  "space_for_control_room",
+  "ac_cable_length_m",
+  "column_break_kwpz",
+  "dc_cable_length_m",
+  "earthing_cable_length_m",
+  "earth_pit_space_available",
+  "civil__structural_tab",
+  "age_of_building",
+  "access_to_the_roof",
+  "rooftop_height_meter",
+  "column_break_mfbv",
+  "parapet_height_meter",
+  "no_of_floors",
+  "water_source_for_cleaning",
+  "other_information_tab",
+  "roof_type",
+  "proposed_capacity_kw",
+  "column_break_kwsl",
+  "whether_site_is_feasible",
   "attachment_tab",
   "photos",
   "remark_tab",
@@ -163,6 +206,227 @@
    "fieldtype": "Data",
    "label": "Site Visitor Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "technical_information_tab",
+   "fieldtype": "Tab Break",
+   "label": "Technical Information"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude"
+  },
+  {
+   "fieldname": "connection",
+   "fieldtype": "Select",
+   "label": "Connection",
+   "options": "\n1 Phase\n3 Phase"
+  },
+  {
+   "fieldname": "meter_connection_type",
+   "fieldtype": "Select",
+   "label": "Meter Connection Type",
+   "options": "\nHT\nLT"
+  },
+  {
+   "fieldname": "ca_number",
+   "fieldtype": "Data",
+   "label": "CA Number"
+  },
+  {
+   "fieldname": "electricity_bill",
+   "fieldtype": "Attach",
+   "label": "Electricity Bill"
+  },
+  {
+   "fieldname": "meter_number",
+   "fieldtype": "Data",
+   "label": "Meter Number"
+  },
+  {
+   "fieldname": "meter_type",
+   "fieldtype": "Select",
+   "label": "Meter Type",
+   "options": "\nSmart\nNormal"
+  },
+  {
+   "fieldname": "column_break_nblq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sanction_load_kwkva",
+   "fieldtype": "Data",
+   "label": "Sanction Load (KW/KVA)"
+  },
+  {
+   "fieldname": "connected_load_kw",
+   "fieldtype": "Data",
+   "label": "Connected Load (KW)"
+  },
+  {
+   "fieldname": "grid_power_availability",
+   "fieldtype": "Select",
+   "label": "Grid Power Availability",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "grid_availability_hours",
+   "fieldtype": "Float",
+   "label": "Grid Availability Hours"
+  },
+  {
+   "default": "0",
+   "fieldname": "3_phase_available_in_ltdb",
+   "fieldtype": "Check",
+   "label": "3 Phase available in LTDB"
+  },
+  {
+   "fieldname": "missing_phase_rybn",
+   "fieldtype": "Data",
+   "label": "Missing Phase (R/Y/B/N)"
+  },
+  {
+   "default": "0",
+   "fieldname": "ltdb_present",
+   "fieldtype": "Check",
+   "label": "LTDB Present"
+  },
+  {
+   "fieldname": "roof_condition",
+   "fieldtype": "Small Text",
+   "label": "Roof Condition"
+  },
+  {
+   "fieldname": "section_break_wbex",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_roof_area_sqmt",
+   "fieldtype": "Float",
+   "label": "Total Roof Area (Sq.mt)"
+  },
+  {
+   "fieldname": "shadow_free_area_sqmt",
+   "fieldtype": "Float",
+   "label": "Shadow Free Area (Sq.mt)"
+  },
+  {
+   "default": "0",
+   "fieldname": "space_for_control_room",
+   "fieldtype": "Check",
+   "label": "Space for Control Room"
+  },
+  {
+   "fieldname": "ac_cable_length_m",
+   "fieldtype": "Float",
+   "label": "AC Cable Length (m)"
+  },
+  {
+   "fieldname": "column_break_kwpz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dc_cable_length_m",
+   "fieldtype": "Float",
+   "label": "DC Cable Length (m)"
+  },
+  {
+   "fieldname": "earthing_cable_length_m",
+   "fieldtype": "Float",
+   "label": "Earthing Cable Length (m)"
+  },
+  {
+   "default": "0",
+   "fieldname": "earth_pit_space_available",
+   "fieldtype": "Check",
+   "label": "Earth Pit Space Available"
+  },
+  {
+   "fieldname": "civil__structural_tab",
+   "fieldtype": "Tab Break",
+   "label": "Civil / Structural"
+  },
+  {
+   "fieldname": "age_of_building",
+   "fieldtype": "Float",
+   "label": "Age of Building"
+  },
+  {
+   "fieldname": "access_to_the_roof",
+   "fieldtype": "Select",
+   "label": "Access to the Roof",
+   "options": "Yes\nNo"
+  },
+  {
+   "fieldname": "rooftop_height_meter",
+   "fieldtype": "Float",
+   "label": "Rooftop Height (Meter)"
+  },
+  {
+   "fieldname": "column_break_mfbv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parapet_height_meter",
+   "fieldtype": "Float",
+   "label": "Parapet Height (meter)"
+  },
+  {
+   "fieldname": "no_of_floors",
+   "fieldtype": "Data",
+   "label": "No. of floors"
+  },
+  {
+   "fieldname": "water_source_for_cleaning",
+   "fieldtype": "Data",
+   "label": "Water Source For Cleaning"
+  },
+  {
+   "fieldname": "other_information_tab",
+   "fieldtype": "Tab Break",
+   "label": "Other Information"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Select",
+   "label": "Roof Type",
+   "options": "\nTin Shed\nRCC\nOther"
+  },
+  {
+   "fieldname": "proposed_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Proposed Capacity (kW)"
+  },
+  {
+   "fieldname": "column_break_kwsl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "whether_site_is_feasible",
+   "fieldtype": "Select",
+   "label": "Whether Site is Feasible",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "nearest_landmark",
+   "fieldtype": "Data",
+   "label": "Nearest Landmark"
+  },
+  {
+   "fieldname": "contact_person_name_and_number",
+   "fieldtype": "Data",
+   "label": "Contact Person Name & Number"
+  },
+  {
+   "fieldname": "nodal_person_building_contact_no",
+   "fieldtype": "Data",
+   "label": "Nodal Person (Building) Contact No."
   }
  ],
  "grid_page_length": 50,
@@ -178,7 +442,7 @@
    "link_fieldname": "site_survey"
   }
  ],
- "modified": "2026-03-30 19:12:28.852949",
+ "modified": "2026-05-04 10:18:24.636139",
  "modified_by": "Administrator",
  "module": "SMR",
  "name": "Site Survey",
