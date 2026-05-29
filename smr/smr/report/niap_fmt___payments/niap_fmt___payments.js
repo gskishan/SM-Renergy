@@ -1,9 +1,10 @@
 frappe.query_reports["NIAP FMT - PAYMENTS"] = {
     "filters": [
         {
-            "fieldname": "party",
-            "label": "Party",
-            "fieldtype": "Data"
+            "fieldname": "bank_account",
+            "label": "Debit Account",
+            "fieldtype": "Link",
+            "options": "Bank Account"
         },
         {
             "fieldname": "from_date",
