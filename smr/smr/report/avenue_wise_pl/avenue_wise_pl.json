@@ -19,7 +19,7 @@
   }
  ],
  "is_standard": "Yes",
- "module": "Accounts",
+ "module": "SMR",
  "name": "Avenue Wise PL",
  "ref_doctype": "GL Entry",
  "report_name": "Avenue Wise PL",
