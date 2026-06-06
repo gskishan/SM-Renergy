@@ -4,11 +4,10 @@ from frappe import _
 
 def execute(filters=None):
     filters = filters or {}
-    from_date = filters.get("from_date")
-    to_date = filters.get("to_date")
+    as_on_date = filters.get("as_on_date")
 
     columns = get_columns()
-    data = get_data(from_date, to_date)
+    data = get_data(as_on_date)
     return columns, data
 
 
@@ -41,24 +40,20 @@ def get_columns():
     ]
 
 
-def get_account_balance(account, from_date, to_date, perspective="liability"):
-    """
-    perspective='liability' → credit - debit (positive = we owe)
-    perspective='asset'     → debit - credit (positive = owed to us)
-    """
+def get_account_balance(account, as_on_date):
+    """Get cumulative credit - debit balance up to as_on_date."""
     result = frappe.db.sql("""
         SELECT SUM(gl.credit) - SUM(gl.debit) AS balance
         FROM `tabGL Entry` gl
         WHERE gl.account = %s
             AND gl.is_cancelled = 0
-            AND gl.posting_date BETWEEN %s AND %s
-    """, (account, from_date, to_date))
-    balance = float(result[0][0] or 0) if result else 0
-    return balance if perspective == "liability" else -balance
+            AND gl.posting_date <= %s
+    """, (account, as_on_date))
+    return float(result[0][0] or 0) if result else 0
 
 
-def get_group_balance(parent_account, from_date, to_date, perspective="liability"):
-    """Recursively sum all leaf account balances under a parent."""
+def get_group_balance(parent_account, as_on_date):
+    """Recursively sum all leaf account balances up to as_on_date."""
     accounts = frappe.db.sql("""
         SELECT name, is_group
         FROM `tabAccount`
@@ -68,14 +63,14 @@ def get_group_balance(parent_account, from_date, to_date, perspective="liability
     total = 0
     for acc in accounts:
         if acc.is_group:
-            total += get_group_balance(acc.name, from_date, to_date, perspective)
+            total += get_group_balance(acc.name, as_on_date)
         else:
-            total += get_account_balance(acc.name, from_date, to_date, perspective)
+            total += get_account_balance(acc.name, as_on_date)
     return total
 
 
-def get_children_with_balance(parent_account, from_date, to_date, only_positive=True):
-    """Get all child accounts — optionally only with positive (credit) balances."""
+def get_children_with_balance(parent_account, as_on_date, only_positive=True):
+    """Get child accounts with non-zero balances."""
     accounts = frappe.db.sql("""
         SELECT name, account_name, is_group
         FROM `tabAccount`
@@ -86,9 +81,9 @@ def get_children_with_balance(parent_account, from_date, to_date, only_positive=
     results = []
     for acc in accounts:
         if acc.is_group:
-            children = get_children_with_balance(acc.name, from_date, to_date, only_positive)
+            children = get_children_with_balance(acc.name, as_on_date, only_positive)
             group_total = sum(c["balance"] for c in children)
-            if group_total > 0 or (not only_positive and group_total != 0):
+            if (only_positive and group_total > 0) or (not only_positive and group_total != 0):
                 results.append({
                     "account_name": acc.account_name,
                     "balance": group_total,
@@ -96,7 +91,7 @@ def get_children_with_balance(parent_account, from_date, to_date, only_positive=
                     "children": children,
                 })
         else:
-            balance = get_account_balance(acc.name, from_date, to_date)
+            balance = get_account_balance(acc.name, as_on_date)
             if (only_positive and balance > 0) or (not only_positive and balance != 0):
                 results.append({
                     "account_name": acc.account_name,
@@ -120,24 +115,24 @@ def spacer():
     return make_row("")
 
 
-def get_data(from_date, to_date):
+def get_data(as_on_date):
     data = []
     indent = "\u00a0" * 4
 
     # ── SECTION 1: CREDIT FACILITY ────────────────────────────────────────
     data.append(make_row("Credit Facility", bold=1))
 
-    # Sanctioned limits from GL accounts (posted via JE by accounts team)
-    dod_sanctioned  = get_account_balance("DOD Sanctioned Limit - SRPL",   from_date, to_date)
-    tl_sanctioned   = get_account_balance("TL Sanctioned Limit - SRPL",    from_date, to_date)
-    bglc_sanctioned = get_account_balance("BG/LC Sanctioned Limit - SRPL", from_date, to_date)
+    # Sanctioned limits — posted via JE by accounts team
+    dod_sanctioned  = get_account_balance("DOD Sanctioned Limit - SRPL",   as_on_date)
+    tl_sanctioned   = get_account_balance("TL Sanctioned Limit - SRPL",    as_on_date)
+    bglc_sanctioned = get_account_balance("BG/LC Sanctioned Limit - SRPL", as_on_date)
 
-    # Outstanding from actual GL balances
-    dod_outstanding  = get_group_balance("Bank Overdraft Account - SRPL", from_date, to_date)
-    tl_outstanding   = get_group_balance("Secured Loans - SRPL",          from_date, to_date)
-    bglc_outstanding = 0.0  # Update once BG/LC account created in COA
+    # Outstanding — cumulative balance from beginning
+    dod_outstanding  = get_group_balance("Bank Overdraft Account - SRPL", as_on_date)
+    tl_outstanding   = get_group_balance("Secured Loans - SRPL",          as_on_date)
+    bglc_outstanding = 0.0
 
-    # Available = Sanctioned - Outstanding (only if positive)
+    # Available = Sanctioned - Outstanding
     dod_available  = max(0, dod_sanctioned - dod_outstanding)
     tl_available   = max(0, tl_sanctioned - tl_outstanding)
     bglc_available = max(0, bglc_sanctioned - bglc_outstanding)
@@ -149,25 +144,25 @@ def get_data(from_date, to_date):
     data.append(make_row(
         indent + "DOD",
         sanctioned=dod_sanctioned or None,
-        outstanding=dod_outstanding or None,
+        outstanding=dod_outstanding if dod_outstanding > 0 else None,
         available=dod_available or None,
     ))
     data.append(make_row(
         indent + "TL",
         sanctioned=tl_sanctioned or None,
-        outstanding=tl_outstanding or None,
+        outstanding=tl_outstanding if tl_outstanding > 0 else None,
         available=tl_available or None,
     ))
     data.append(make_row(
         indent + "BG/LC",
         sanctioned=bglc_sanctioned or None,
-        outstanding=bglc_outstanding or None,
+        outstanding=bglc_outstanding if bglc_outstanding > 0 else None,
         available=bglc_available or None,
     ))
     data.append(make_row(
         "Total",
         sanctioned=total_sanctioned or None,
-        outstanding=total_outstanding or None,
+        outstanding=total_outstanding if total_outstanding > 0 else None,
         available=total_available or None,
         bold=1,
     ))
@@ -179,46 +174,45 @@ def get_data(from_date, to_date):
 
     grand_sources_total = 0
 
-    # Director's Capital → Shareholders Funds - SRPL
-    directors_capital = get_group_balance("Shareholders Funds - SRPL", from_date, to_date)
+    # Director's Capital
+    directors_capital = get_group_balance("Shareholders Funds - SRPL", as_on_date)
     if directors_capital > 0:
         data.append(make_row(indent + "Director's Capital", outstanding=directors_capital))
         grand_sources_total += directors_capital
 
-    # ICICI Bank Limits → Secured Loans - SRPL (only positive = still outstanding)
-    icici_loans = get_group_balance("Secured Loans - SRPL", from_date, to_date)
+    # ICICI Bank Limits — Secured Loans
+    icici_loans = get_group_balance("Secured Loans - SRPL", as_on_date)
     if icici_loans > 0:
         data.append(make_row(indent + "ICICI Bank Limits", outstanding=icici_loans))
         grand_sources_total += icici_loans
 
-    # Unsecured Loans — only show accounts with positive (credit) balance
+    # Unsecured Loans — only positive balances
     unsecured_accounts = get_children_with_balance(
-        "Unsecured Loans - SRPL", from_date, to_date, only_positive=True)
+        "Unsecured Loans - SRPL", as_on_date, only_positive=True)
     for acc in unsecured_accounts:
         data.append(make_row(indent + acc["account_name"], outstanding=acc["balance"]))
         grand_sources_total += acc["balance"]
 
     # Directors USL
-    directors_usl = get_group_balance("Directors - USL - SRPL", from_date, to_date)
+    directors_usl = get_group_balance("Directors - USL - SRPL", as_on_date)
     if directors_usl > 0:
         data.append(make_row(indent + "Directors USL", outstanding=directors_usl))
         grand_sources_total += directors_usl
 
-    # Creditors for Goods — only if positive (net payable to suppliers)
-    creditors_goods = get_account_balance("Creditors for Goods - SRPL", from_date, to_date)
+    # Creditors for Goods
+    creditors_goods = get_account_balance("Creditors for Goods - SRPL", as_on_date)
     if creditors_goods > 0:
         data.append(make_row(indent + "Creditors for Goods", outstanding=creditors_goods))
         grand_sources_total += creditors_goods
 
-    # Creditors for Services — only if positive (net payable to suppliers)
-    creditors_services = get_account_balance("Creditors for Services - SRPL", from_date, to_date)
+    # Creditors for Services
+    creditors_services = get_account_balance("Creditors for Services - SRPL", as_on_date)
     if creditors_services > 0:
         data.append(make_row(indent + "Creditors for Services", outstanding=creditors_services))
         grand_sources_total += creditors_services
 
     data.append(spacer())
 
-    # Grand Total
     data.append(make_row(
         "Total Funds from Sources",
         outstanding=grand_sources_total,
