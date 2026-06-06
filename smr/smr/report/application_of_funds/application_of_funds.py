@@ -18,11 +18,11 @@ def get_columns():
             "label": _("Particulars"),
             "fieldname": "particulars",
             "fieldtype": "Data",
-            "width": 350,
+            "width": 380,
         },
         {
-            "label": _("Amount"),
-            "fieldname": "amount",
+            "label": _("Breakup"),
+            "fieldname": "breakup",
             "fieldtype": "Currency",
             "width": 180,
         },
@@ -35,21 +35,21 @@ def get_columns():
     ]
 
 
-def get_account_balance(account, from_date, to_date):
-    """Get net balance for an account within date range."""
+def get_account_balance(account, from_date, to_date, root_type="Asset"):
+    """Get net balance for a specific account."""
     result = frappe.db.sql("""
-        SELECT
-            SUM(gl.debit) - SUM(gl.credit) AS balance
+        SELECT SUM(gl.debit) - SUM(gl.credit) AS balance
         FROM `tabGL Entry` gl
         WHERE gl.account = %s
             AND gl.is_cancelled = 0
             AND gl.posting_date BETWEEN %s AND %s
     """, (account, from_date, to_date))
-    return result[0][0] or 0 if result else 0
+    balance = result[0][0] if result else 0
+    return float(balance or 0)
 
 
-def get_children_balances(parent_account, from_date, to_date):
-    """Get all leaf account balances under a parent, recursively."""
+def get_all_children(parent_account, from_date, to_date):
+    """Recursively get all accounts under a parent with balances."""
     accounts = frappe.db.sql("""
         SELECT name, account_name, is_group
         FROM `tabAccount`
@@ -61,17 +61,16 @@ def get_children_balances(parent_account, from_date, to_date):
     results = []
     for acc in accounts:
         if acc.is_group:
-            children = get_children_balances(acc.name, from_date, to_date)
-            if children:
-                group_total = sum(c["_balance"] for c in children)
-                if group_total != 0:
-                    results.append({
-                        "name": acc.name,
-                        "account_name": acc.account_name,
-                        "is_group": True,
-                        "_balance": group_total,
-                        "children": children,
-                    })
+            children = get_all_children(acc.name, from_date, to_date)
+            group_total = sum(c["_balance"] for c in children)
+            if group_total != 0:
+                results.append({
+                    "name": acc.name,
+                    "account_name": acc.account_name,
+                    "is_group": True,
+                    "_balance": group_total,
+                    "children": children,
+                })
         else:
             balance = get_account_balance(acc.name, from_date, to_date)
             if balance != 0:
@@ -85,41 +84,52 @@ def get_children_balances(parent_account, from_date, to_date):
 
 
 def build_rows(accounts, indent=0, data=None):
-    """Recursively build report rows from account tree."""
+    """Build report rows — leaf accounts in Breakup, group totals in Total."""
     if data is None:
         data = []
 
     for acc in accounts:
-        prefix = "\u00a0" * (indent * 6)
+        spaces = "\u00a0" * (indent * 4)
+
         if acc["is_group"]:
             children = acc.get("children", [])
             group_total = acc["_balance"]
+            has_children_groups = any(c["is_group"] for c in children)
 
+            # Group header row
+            data.append({
+                "particulars": spaces + acc["account_name"],
+                "breakup": None,
+                "total": None,
+                "bold": 1,
+                "indent": indent,
+            })
+
+            # Recurse into children
+            build_rows(children, indent + 1, data)
+
+            # Group subtotal row — show in Total if top level, Breakup if nested
             if indent == 0:
-                # Top level section header — bold, show total in Total column
                 data.append({
-                    "particulars": acc["account_name"],
-                    "amount": None,
+                    "particulars": spaces + "Total " + acc["account_name"],
+                    "breakup": None,
                     "total": group_total,
                     "bold": 1,
                     "indent": indent,
                 })
             else:
-                # Sub-group — show name and subtotal in amount column
                 data.append({
-                    "particulars": prefix + acc["account_name"],
-                    "amount": group_total,
+                    "particulars": spaces + "Subtotal - " + acc["account_name"],
+                    "breakup": group_total,
                     "total": None,
                     "bold": 1,
                     "indent": indent,
                 })
-
-            build_rows(children, indent + 1, data)
         else:
-            # Leaf account — show in amount column
+            # Leaf account — always in Breakup column
             data.append({
-                "particulars": prefix + acc["account_name"],
-                "amount": acc["_balance"],
+                "particulars": spaces + acc["account_name"],
+                "breakup": acc["_balance"],
                 "total": None,
                 "bold": 0,
                 "indent": indent,
@@ -128,91 +138,83 @@ def build_rows(accounts, indent=0, data=None):
     return data
 
 
+def section_header(label):
+    return {
+        "particulars": label,
+        "breakup": None,
+        "total": None,
+        "bold": 1,
+        "indent": 0,
+    }
+
+
+def section_total(label, amount):
+    return {
+        "particulars": label,
+        "breakup": None,
+        "total": amount,
+        "bold": 1,
+        "indent": 0,
+    }
+
+
+def spacer():
+    return {"particulars": "", "breakup": None, "total": None}
+
+
 def get_data(from_date, to_date):
     data = []
+    grand_total = 0
 
     # ── SECTION 1: FIXED ASSETS ──────────────────────────────────────────
-    fixed_assets_account = "Fixed Assets - SRPL"
-    fixed_assets = get_children_balances(fixed_assets_account, from_date, to_date)
-    fixed_assets_total = sum(a["_balance"] for a in fixed_assets)
+    data.append(section_header("Fixed Assets"))
 
-    # Section header
-    data.append({
-        "particulars": "FIXED ASSETS",
-        "amount": None,
-        "total": None,
-        "bold": 1,
-        "indent": 0,
-    })
-
+    fixed_assets = get_all_children("Fixed Assets - SRPL", from_date, to_date)
+    fixed_total = sum(a["_balance"] for a in fixed_assets)
     build_rows(fixed_assets, indent=1, data=data)
 
-    if fixed_assets_total != 0:
-        data.append({
-            "particulars": "Total Fixed Assets",
-            "amount": None,
-            "total": fixed_assets_total,
-            "bold": 1,
-            "indent": 0,
-        })
-
-    data.append({"particulars": "", "amount": None, "total": None})  # spacer
+    data.append(section_total("Total Fixed Assets", fixed_total))
+    data.append(spacer())
+    grand_total += fixed_total
 
     # ── SECTION 2: CURRENT ASSETS ─────────────────────────────────────────
-    current_assets_account = "Current Assets - SRPL"
-    current_assets = get_children_balances(current_assets_account, from_date, to_date)
-    current_assets_total = sum(a["_balance"] for a in current_assets)
+    data.append(section_header("Current Assets"))
 
-    data.append({
-        "particulars": "CURRENT ASSETS",
-        "amount": None,
-        "total": None,
-        "bold": 1,
-        "indent": 0,
-    })
-
+    current_assets = get_all_children("Current Assets - SRPL", from_date, to_date)
+    current_total = sum(a["_balance"] for a in current_assets)
     build_rows(current_assets, indent=1, data=data)
 
-    if current_assets_total != 0:
-        data.append({
-            "particulars": "Total Current Assets",
-            "amount": None,
-            "total": current_assets_total,
-            "bold": 1,
-            "indent": 0,
-        })
+    data.append(section_total("Total Current Assets", current_total))
+    data.append(spacer())
+    grand_total += current_total
 
-    data.append({"particulars": "", "amount": None, "total": None})  # spacer
+    # ── SECTION 3: EXPENDITURE FOR FUTURE REALISATION ────────────────────
+    # This maps to Temporary Accounts or Investments in COA
+    exp_accounts = []
 
-    # ── SECTION 3: INVESTMENTS ────────────────────────────────────────────
-    investments_account = "Investments - SRPL"
-    investments = get_children_balances(investments_account, from_date, to_date)
-    investments_total = sum(a["_balance"] for a in investments)
+    # Check Temporary Accounts
+    temp = get_all_children("Temporary Accounts - SRPL", from_date, to_date)
+    if temp:
+        exp_accounts.extend(temp)
 
-    if investments_total != 0:
-        data.append({
-            "particulars": "INVESTMENTS",
-            "amount": None,
-            "total": None,
-            "bold": 1,
-            "indent": 0,
-        })
-        build_rows(investments, indent=1, data=data)
-        data.append({
-            "particulars": "Total Investments",
-            "amount": None,
-            "total": investments_total,
-            "bold": 1,
-            "indent": 0,
-        })
-        data.append({"particulars": "", "amount": None, "total": None})
+    # Check Investments
+    investments = get_all_children("Investments - SRPL", from_date, to_date)
+    if investments:
+        exp_accounts.extend(investments)
+
+    exp_total = sum(a["_balance"] for a in exp_accounts)
+
+    if exp_total != 0:
+        data.append(section_header("Expenditure for Future Realisation"))
+        build_rows(exp_accounts, indent=1, data=data)
+        data.append(section_total("Total Expenditure for Future Realisation", exp_total))
+        data.append(spacer())
+        grand_total += exp_total
 
     # ── GRAND TOTAL ───────────────────────────────────────────────────────
-    grand_total = fixed_assets_total + current_assets_total + investments_total
-
     data.append({
-        "particulars": "GRAND TOTAL",
-        "amount": None,
+        "particulars": "Grand Total",
+        "breakup": None,
         "total": grand_total,
         "bold": 1,
         "indent": 0,
