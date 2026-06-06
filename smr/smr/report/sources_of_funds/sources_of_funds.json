@@ -6,15 +6,9 @@
  "doctype": "Report",
  "filters": [
   {
-   "fieldname": "from_date",
+   "fieldname": "as_on_date",
    "fieldtype": "Date",
-   "label": "From Date",
-   "mandatory": 1
-  },
-  {
-   "fieldname": "to_date",
-   "fieldtype": "Date",
-   "label": "To Date",
+   "label": "As On Date",
    "mandatory": 1
   }
  ],
