@@ -136,6 +136,10 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
+override_doctype_class = {
+    "Purchase Invoice": "smr.overrides.purchase_invoice.CustomPurchaseInvoice"
+}
+
 # Document Events
 # ---------------
 # Hook on document methods and events
