@@ -1,5 +1,5 @@
 import frappe
-from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
+from india_compliance.gst_india.overrides.purchase_invoice import PurchaseInvoice
 
 class CustomPurchaseInvoice(PurchaseInvoice):
     def set_itc_claim_period(self):
