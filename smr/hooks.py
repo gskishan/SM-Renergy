@@ -148,7 +148,9 @@ doc_events = {
     },
     "Sales Invoice":{
         "on_update_after_submit": "smr.smr.custom_script.api.on_update_after_submit",
-
+    },
+    "Purchase Invoice": {
+        "before_validate": "smr.overrides.purchase_invoice.set_itc_claim_period",
     }
 }
 # doc_events = {
