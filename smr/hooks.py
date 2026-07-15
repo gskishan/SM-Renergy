@@ -161,6 +161,19 @@ doc_events = {
 # 	}
 # }
 
+# Fixtures
+# ---------------
+fixtures = [
+    {
+        "doctype": "Property Setter",
+        "filters": [
+            ["doc_type", "=", "Delivery Note"],
+            ["field_name", "in", ["cost_center", "project", "trading", "epc", "avenue"]],
+            ["property", "=", "allow_on_submit"]
+        ]
+    }
+]
+
 # Scheduled Tasks
 # ---------------
 
